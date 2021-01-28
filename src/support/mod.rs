@@ -35,13 +35,18 @@ pub struct Color {
 
 pub fn load(gl_context: &glutin::Context<PossiblyCurrent>) {
     let gl = gl::Gles2::load_with(|ptr| gl_context.get_proc_address(ptr) as *const _);
-    let version = unsafe {
-        let data = CStr::from_ptr(gl.GetString(gl::VERSION) as *const _)
+
+    let get_string = |param_id: gl::types::GLenum| unsafe {
+        let data = CStr::from_ptr(gl.GetString(param_id) as *const _)
             .to_bytes()
             .to_vec();
         String::from_utf8(data).unwrap()
     };
-    println!("OpenGL version {}", version);
+
+    println!("Vendor graphic card {}", get_string(gl::VENDOR));
+    println!("Renderer {}", get_string(gl::RENDERER));
+    println!("OpenGL version {}", get_string(gl::VERSION));
+    println!("Glsl version {}", get_string(gl::SHADING_LANGUAGE_VERSION));
     unsafe { GL_CONTEXT.gl = Some(Gl { glraw: gl }) };
 }
 
@@ -118,6 +123,8 @@ impl Gl {
 
         let color_attrib =
             unsafe { gl.GetUniformLocation(program.id(), b"uColor\0".as_ptr() as *const _) };
+        let pos_attrib =
+            unsafe { gl.GetAttribLocation(program.id(), b"position\0".as_ptr() as *const _) };
 
         unsafe {
             gl.Uniform4fv(
@@ -126,9 +133,6 @@ impl Gl {
                 &[0.0f32, 0.3f32, 0.5f32, 1.0f32] as *const _,
             );
         }
-
-        let pos_attrib =
-            unsafe { gl.GetAttribLocation(program.id(), b"position\0".as_ptr() as *const _) };
 
         unsafe {
             gl.EnableVertexAttribArray(pos_attrib as gl::types::GLuint);
