@@ -6,14 +6,6 @@ use gl_bindings::{self as gl};
 
 use glutin::{self, PossiblyCurrent};
 use std::ffi::CStr;
-
-// struct GlCtx(Gl);
-// impl Drop for GlCtx {
-//     fn drop(&mut self) {
-//         println!("glctx is being dropped");
-//         unsafe { GL_CONTEXT.give_back_context(self.0) };
-//     }
-// }
 pub static mut GL_CONTEXT: GlContext = GlContext { gl: None };
 
 pub struct GlContext {
@@ -72,17 +64,6 @@ impl Gl {
         }
     }
 
-    fn create_program(&self) -> Result<u32, String> {
-        let gl = &self.glraw;
-        let program = unsafe { gl.CreateProgram() };
-        if program == 0 {
-            return Err(String::from(
-                "Cannot create the opengl program (CreateProgram)",
-            ));
-        }
-        Ok(program)
-    }
-
     pub fn rect(&self) -> Result<(), String> {
         const VS_SRC: &'static [u8] = b"
         #version 100
@@ -113,16 +94,10 @@ impl Gl {
 
         let vs = render_gl::Shader::from_vert_source(&self, VS_SRC)?;
         let fs = render_gl::Shader::from_frag_source(&self, FS_SRC)?;
+        let program = render_gl::Program::from_shaders(&self, &[vs, fs])?;
+        program.set_used();
 
         let gl = &self.glraw;
-        let program = self.create_program()?;
-        unsafe {
-            gl.AttachShader(program, vs.id());
-            gl.AttachShader(program, fs.id());
-            gl.LinkProgram(program);
-            gl.UseProgram(program);
-        }
-
         unsafe {
             let mut vb = std::mem::zeroed();
             gl.GenBuffers(1, &mut vb);
@@ -142,7 +117,7 @@ impl Gl {
         }
 
         let color_attrib =
-            unsafe { gl.GetUniformLocation(program, b"uColor\0".as_ptr() as *const _) };
+            unsafe { gl.GetUniformLocation(program.id(), b"uColor\0".as_ptr() as *const _) };
 
         unsafe {
             gl.Uniform4fv(
@@ -153,7 +128,7 @@ impl Gl {
         }
 
         let pos_attrib =
-            unsafe { gl.GetAttribLocation(program, b"position\0".as_ptr() as *const _) };
+            unsafe { gl.GetAttribLocation(program.id(), b"position\0".as_ptr() as *const _) };
 
         unsafe {
             gl.EnableVertexAttribArray(pos_attrib as gl::types::GLuint);

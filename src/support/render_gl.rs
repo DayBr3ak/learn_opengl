@@ -12,10 +12,6 @@ fn get_shader_info_log(gl: &Gles2, shader: u32) -> String {
     unsafe {
         gl.GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
     }
-    if !(len >= 0 && len < 10000) {
-        panic!("info log size is wrong");
-    }
-
     let buffer = vec![0u8; len as usize + 1];
     let error: CString = unsafe { CString::from_vec_unchecked(buffer) };
 
@@ -90,6 +86,82 @@ impl<'u> Drop for Shader<'u> {
     fn drop(&mut self) {
         unsafe {
             self.glraw.DeleteShader(self.id);
+        }
+    }
+}
+
+pub struct Program<'u> {
+    id: gl::types::GLuint,
+    glraw: &'u Gles2,
+}
+impl<'u> Program<'u> {
+    pub fn id(&self) -> gl::types::GLuint {
+        self.id
+    }
+    pub fn from_shaders(gl: &'u Gl, shaders: &[Shader]) -> Result<Program<'u>, String> {
+        let gl = &gl.glraw;
+        let program_id = unsafe { gl.CreateProgram() };
+        if program_id == 0 {
+            return Err(String::from(
+                "Cannot create the opengl program (CreateProgram)",
+            ));
+        }
+
+        for shader in shaders {
+            unsafe {
+                gl.AttachShader(program_id, shader.id());
+            }
+        }
+
+        unsafe {
+            gl.LinkProgram(program_id);
+        }
+
+        // continue with error handling here
+        let mut success = 0;
+        unsafe {
+            gl.GetProgramiv(program_id, gl::LINK_STATUS, &mut success);
+        }
+        if success == 0 {
+            let mut len: gl::types::GLint = 0;
+            unsafe {
+                gl.GetProgramiv(program_id, gl::INFO_LOG_LENGTH, &mut len);
+            }
+
+            let buffer = vec![0u8; len as usize + 1];
+            let error: CString = unsafe { CString::from_vec_unchecked(buffer) };
+            unsafe {
+                gl.GetProgramInfoLog(
+                    program_id,
+                    len,
+                    std::ptr::null_mut(),
+                    error.as_ptr() as *mut _,
+                );
+            }
+
+            return Err(error.to_string_lossy().into_owned());
+        }
+
+        for shader in shaders {
+            unsafe {
+                gl.DetachShader(program_id, shader.id());
+            }
+        }
+
+        Ok(Program {
+            id: program_id,
+            glraw: gl,
+        })
+    }
+    pub fn set_used(&self) {
+        unsafe { self.glraw.UseProgram(self.id) }
+    }
+}
+
+impl<'u> Drop for Program<'u> {
+    fn drop(&mut self) {
+        unsafe {
+            self.glraw.DeleteProgram(self.id);
         }
     }
 }
