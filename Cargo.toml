@@ -11,3 +11,8 @@ gl = { path = "lib/gl" }
 glutin = "0.26.0"
 takeable-option = "0.4"
 image = "0.21"
+
+[features]
+gl_debug = ["gl/debug"]
+
+# allow to run `cargo run --features "gl_debug"`

@@ -1,4 +1,5 @@
 /target
 /lib/gl/target
 
-/lib/gl/src/lib.rs
+/lib/gl/src/bindings.rs
+debug.log

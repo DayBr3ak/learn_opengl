@@ -1,6 +1,6 @@
 mod render_gl;
 
-use gl::Gles2;
+use gl::Gles;
 
 use glutin::{self, PossiblyCurrent};
 use std::ffi::CStr;
@@ -21,7 +21,7 @@ impl GlContext {
 }
 
 pub struct Gl {
-    glraw: Gles2,
+    inner: Gles,
 }
 
 pub struct Color {
@@ -32,7 +32,7 @@ pub struct Color {
 }
 
 pub fn load(gl_context: &glutin::Context<PossiblyCurrent>) {
-    let gl = gl::Gles2::load_with(|ptr| gl_context.get_proc_address(ptr) as *const _);
+    let gl = Gles::load_with(|ptr| gl_context.get_proc_address(ptr) as *const _);
 
     let get_string = |param_id: gl::types::GLenum| unsafe {
         let data = CStr::from_ptr(gl.GetString(param_id) as *const _)
@@ -45,12 +45,12 @@ pub fn load(gl_context: &glutin::Context<PossiblyCurrent>) {
     println!("Renderer {}", get_string(gl::RENDERER));
     println!("OpenGL version {}", get_string(gl::VERSION));
     println!("Glsl version {}", get_string(gl::SHADING_LANGUAGE_VERSION));
-    unsafe { GL_CONTEXT.gl = Some(Gl { glraw: gl }) };
+    unsafe { GL_CONTEXT.gl = Some(Gl { inner: gl }) };
 }
 
 impl Gl {
     pub fn draw_frame(&self, color: Color) {
-        let gl = &self.glraw;
+        let gl = &self.inner;
         unsafe {
             gl.ClearColor(color.red, color.green, color.blue, color.alpha);
             gl.Clear(gl::COLOR_BUFFER_BIT);
@@ -59,7 +59,7 @@ impl Gl {
     }
 
     pub fn viewport(&self) {
-        let gl = &self.glraw;
+        let gl = &self.inner;
         unsafe {
             gl.Viewport(0, 0, 800, 600);
             gl.ClearColor(0., 0.5, 0., 1.0);
@@ -100,7 +100,7 @@ impl Gl {
         let program = render_gl::Program::from_shaders(&self, &[vs, fs])?;
         program.set_used();
 
-        let gl = &self.glraw;
+        let gl = &self.inner;
         unsafe {
             let mut vb = std::mem::zeroed();
             gl.GenBuffers(1, &mut vb);

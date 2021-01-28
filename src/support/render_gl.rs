@@ -1,14 +1,15 @@
 use super::Gl;
-use gl::Gles2;
+
+use gl::Gles;
 use std;
 use std::ffi::CString;
 
-pub struct Shader<'u> {
+pub struct Shader {
     id: gl::types::GLuint,
-    glraw: &'u Gles2,
+    gl: Gles,
 }
 
-fn get_shader_info_log(gl: &Gles2, shader: u32) -> String {
+fn get_shader_info_log(gl: &Gles, shader: u32) -> String {
     let mut len = 0;
     unsafe {
         gl.GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
@@ -30,7 +31,7 @@ fn get_shader_info_log(gl: &Gles2, shader: u32) -> String {
 }
 
 fn shader_from_source(
-    gl: &Gles2,
+    gl: &Gles,
     source: &'static [u8],
     shader_type: gl::types::GLenum,
 ) -> Result<u32, String> {
@@ -57,24 +58,24 @@ fn shader_from_source(
     }
 }
 
-impl<'u> Shader<'u> {
+impl Shader {
     fn from_source(
-        gl: &'u Gl,
+        gl: &Gl,
         source: &'static [u8],
         shader_type: gl::types::GLenum,
-    ) -> Result<Shader<'u>, String> {
-        let id = shader_from_source(&gl.glraw, source, shader_type)?;
+    ) -> Result<Shader, String> {
+        let id = shader_from_source(&gl.inner, source, shader_type)?;
         Ok(Shader {
             id,
-            glraw: &gl.glraw,
+            gl: gl.inner.clone(),
         })
     }
 
-    pub fn from_vert_source(gl: &'u Gl, source: &'static [u8]) -> Result<Shader<'u>, String> {
+    pub fn from_vert_source(gl: &Gl, source: &'static [u8]) -> Result<Shader, String> {
         Self::from_source(gl, source, gl::VERTEX_SHADER)
     }
 
-    pub fn from_frag_source(gl: &'u Gl, source: &'static [u8]) -> Result<Shader<'u>, String> {
+    pub fn from_frag_source(gl: &Gl, source: &'static [u8]) -> Result<Shader, String> {
         Self::from_source(gl, source, gl::FRAGMENT_SHADER)
     }
 
@@ -83,24 +84,24 @@ impl<'u> Shader<'u> {
     }
 }
 
-impl<'u> Drop for Shader<'u> {
+impl Drop for Shader {
     fn drop(&mut self) {
         unsafe {
-            self.glraw.DeleteShader(self.id);
+            self.gl.DeleteShader(self.id);
         }
     }
 }
 
-pub struct Program<'u> {
+pub struct Program {
     id: gl::types::GLuint,
-    glraw: &'u Gles2,
+    gl: Gles,
 }
-impl<'u> Program<'u> {
+impl Program {
     pub fn id(&self) -> gl::types::GLuint {
         self.id
     }
-    pub fn from_shaders(gl: &'u Gl, shaders: &[Shader]) -> Result<Program<'u>, String> {
-        let gl = &gl.glraw;
+    pub fn from_shaders(gl: &Gl, shaders: &[Shader]) -> Result<Program, String> {
+        let gl = &gl.inner;
         let program_id = unsafe { gl.CreateProgram() };
         if program_id == 0 {
             return Err(String::from(
@@ -151,18 +152,18 @@ impl<'u> Program<'u> {
 
         Ok(Program {
             id: program_id,
-            glraw: gl,
+            gl: gl.clone(),
         })
     }
     pub fn set_used(&self) {
-        unsafe { self.glraw.UseProgram(self.id) }
+        unsafe { self.gl.UseProgram(self.id) }
     }
 }
 
-impl<'u> Drop for Program<'u> {
+impl Drop for Program {
     fn drop(&mut self) {
         unsafe {
-            self.glraw.DeleteProgram(self.id);
+            self.gl.DeleteProgram(self.id);
         }
     }
 }
