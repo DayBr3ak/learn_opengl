@@ -1,8 +1,6 @@
-mod gl_bindings;
 mod render_gl;
 
-use gl_bindings::Gles2;
-use gl_bindings::{self as gl};
+use gl::Gles2;
 
 use glutin::{self, PossiblyCurrent};
 use std::ffi::CStr;

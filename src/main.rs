@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-
 mod support;
 
 use glutin::event::{Event, WindowEvent};

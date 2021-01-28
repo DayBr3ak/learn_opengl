@@ -1,4 +1,5 @@
-use super::{gl, Gl, Gles2};
+use super::Gl;
+use gl::Gles2;
 use std;
 use std::ffi::CString;
 

@@ -410,6 +410,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gl"
+version = "0.1.0"
+dependencies = [
+ "gl_generator",
+]
+
+[[package]]
 name = "gl_generator"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -424,7 +431,7 @@ dependencies = [
 name = "glut"
 version = "0.1.0"
 dependencies = [
- "gl_generator",
+ "gl",
  "glutin",
  "image",
  "takeable-option",

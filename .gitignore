@@ -1,2 +1,4 @@
 /target
-gl_bindings.rs
+/lib/gl/target
+
+/lib/gl/src/lib.rs
