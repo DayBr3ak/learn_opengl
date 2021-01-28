@@ -6,7 +6,7 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
-use support::load;
+use support::{load, GL_CONTEXT};
 
 fn main() {
     let el = EventLoop::new();
@@ -23,9 +23,10 @@ fn main() {
         windowed_context.get_pixel_format()
     );
 
-    let gl = load(&windowed_context.context());
+    load(&windowed_context.context());
 
     let mut redraw = 0;
+    let gl = unsafe { GL_CONTEXT.take_context() };
     el.run(move |event, _, control_flow| {
         // println!("{:?}", event);
         *control_flow = ControlFlow::Wait;
@@ -42,7 +43,10 @@ fn main() {
                 if redraw != -1 {
                     // gl.draw_frame(Color { red: 1.0, green: 0.5, blue: 0.7, alpha: 1.0 });
                     gl.viewport();
-                    gl.rect();
+
+                    gl.rect().unwrap_or_else(|err| {
+                        println!("{}", err);
+                    });
                 } else {
                     gl.viewport();
                 }
