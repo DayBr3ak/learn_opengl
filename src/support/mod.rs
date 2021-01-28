@@ -1,9 +1,13 @@
-mod render_gl;
-
 use gl::Gles;
 
+pub mod render_gl;
+pub mod resources;
+
 use glutin::{self, PossiblyCurrent};
+pub use render_gl::*;
+pub use resources::*;
 use std::ffi::CStr;
+
 pub static mut GL_CONTEXT: GlContext = GlContext { gl: None };
 
 pub struct GlContext {
@@ -67,7 +71,7 @@ impl Gl {
         }
     }
 
-    pub fn rect(&self) -> Result<(), String> {
+    pub fn rect(&self, program: &Program) -> Result<(), String> {
         const VS_SRC: &'static [u8] = b"
         #version 100
         precision mediump float;
@@ -75,7 +79,7 @@ impl Gl {
         void main() {
             gl_Position = vec4(position, 0.0, 1.0);
         }
-        \0";
+        ";
 
         const FS_SRC: &'static [u8] = b"
         #version 100
@@ -84,7 +88,7 @@ impl Gl {
         void main() {
             gl_FragColor = uColor;
         }
-        \0";
+        ";
 
         const VAL: f32 = 0.5;
         const ASPECT: f32 = 1.0;
@@ -95,9 +99,6 @@ impl Gl {
             -VAL, VAL* ASPECT, VAL, -VAL* ASPECT, -VAL, -VAL* ASPECT, // trangle 2
         ];
 
-        let vs = render_gl::Shader::from_vert_source(&self, VS_SRC)?;
-        let fs = render_gl::Shader::from_frag_source(&self, FS_SRC)?;
-        let program = render_gl::Program::from_shaders(&self, &[vs, fs])?;
         program.set_used();
 
         let gl = &self.inner;

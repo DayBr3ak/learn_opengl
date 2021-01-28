@@ -435,6 +435,7 @@ dependencies = [
  "glutin",
  "image",
  "takeable-option",
+ "walkdir",
 ]
 
 [[package]]

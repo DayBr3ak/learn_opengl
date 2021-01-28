@@ -5,9 +5,13 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
+use std::path::Path;
+use support::render_gl::Program;
 use support::{load, GL_CONTEXT};
 
 fn main() {
+    let res = support::resources::Resources::from_relative_exe_path(Path::new("assets")).unwrap();
+
     let el = EventLoop::new();
     let wb = WindowBuilder::new()
         .with_title("A fantastic window!")
@@ -26,6 +30,8 @@ fn main() {
 
     let mut redraw = 0;
     let gl = unsafe { GL_CONTEXT.take_context() };
+    let program = Program::from_res(&gl, &res, "shaders/triangle").unwrap();
+
     el.run(move |event, _, control_flow| {
         // println!("{:?}", event);
         *control_flow = ControlFlow::Wait;
@@ -43,7 +49,7 @@ fn main() {
                     // gl.draw_frame(Color { red: 1.0, green: 0.5, blue: 0.7, alpha: 1.0 });
                     gl.viewport();
 
-                    gl.rect().unwrap_or_else(|err| {
+                    gl.rect(&program).unwrap_or_else(|err| {
                         println!("{}", err);
                     });
                 } else {
